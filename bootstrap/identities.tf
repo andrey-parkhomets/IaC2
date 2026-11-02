@@ -42,7 +42,11 @@ resource "azurerm_role_definition" "plan" {
   description = "Read-only access needed for terraform plan of the ${var.project} stack"
 
   permissions {
-    actions = ["*/read"]
+    actions = [
+      "*/read",
+      # azurerm reads Container App secrets on refresh; proven by a failing dev plan (PR #7)
+      "Microsoft.App/containerApps/listSecrets/action",
+    ]
   }
 
   assignable_scopes = [for rg in azurerm_resource_group.env : rg.id]

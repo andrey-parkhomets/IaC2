@@ -37,7 +37,7 @@ jobs:
             echo "::error::plan identity could write to $RG"; exit 1
           fi
           grep -q AuthorizationFailed err.txt || { cat err.txt; exit 1; }
-          echo "denied as expected: $(grep -o 'does not have authorization[^.]*' err.txt | head -1)"
+          echo "denied as expected: $(grep -o "perform action '[^']*'" err.txt | head -1)"
 
       - name: State write is denied
         env:
@@ -50,5 +50,6 @@ jobs:
                -n "guardrail-probe-$GITHUB_RUN_ID.txt" -f probe.txt -o none 2>err.txt; then
             echo "::error::plan identity could write state in $account/$container"; exit 1
           fi
-          grep -q AuthorizationPermissionMismatch err.txt || { cat err.txt; exit 1; }
-          echo "denied as expected: AuthorizationPermissionMismatch on $account/$container"
+          # az CLI replaces the 403 AuthorizationPermissionMismatch with this generic message
+          grep -qE "AuthorizationPermissionMismatch|do not have the required permissions" err.txt || { cat err.txt; exit 1; }
+          echo "denied as expected: blob write on $account/$container"

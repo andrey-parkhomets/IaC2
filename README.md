@@ -71,7 +71,7 @@ No client secrets, storage keys or PATs exist. Each environment has:
 
 | Identity | GitHub environment | Usable from | Azure rights |
 |---|---|---|---|
-| `gh-IaC2-<env>-plan` | `plan-<env>` | any branch / PR | custom *Terraform Plan* role on the env RG (`*/read` only, proven on every PR by the `guardrails` workflow), Blob **Reader** on its state container |
+| `gh-IaC2-<env>-plan` | `plan-<env>` | any branch / PR | custom *Terraform Plan* role on the env RG (`*/read` + Container App `listSecrets`, which the provider needs to refresh; writes are proven denied on every PR by the `guardrails` workflow), Blob **Reader** on its state container |
 | `gh-IaC2-<env>-apply` | `<env>` | **`main` only**, prod also needs a reviewer | Contributor + RBAC Administrator on **its own resource group only**, Blob Contributor on its state container |
 
 The federated credential subject is the GitHub environment, so a workflow edited on a PR branch
