@@ -12,3 +12,7 @@ updates:
       - /modules/*
     schedule:
       interval: weekly
+    # Major provider upgrades are planned work (work plan #16), not weekly bumps
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

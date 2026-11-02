@@ -5,7 +5,7 @@ github_owner      = "andrey-parkhomets"
 github_repository = "IaC2"
 
 # gh api repos/andrey-parkhomets/IaC2/actions/oidc/customization/sub -q .sub_claim_prefix
-github_oidc_subject_prefix = "TO_BE_SET_AFTER_REPO_CREATION"
+github_oidc_subject_prefix = "repo:andrey-parkhomets@6885502/IaC2@1443265639"
 
 environments = {
   dev  = {}
