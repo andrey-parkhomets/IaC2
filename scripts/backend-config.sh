@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Writes backend.hcl for every state container created by bootstrap:
 # "bootstrap" goes into bootstrap/, every environment into envs/<env>/.
+# Also initialises each environment's (empty) state with the admin's rights: CI plan
+# identities can only read state, and the first init would otherwise have to create it.
 # Usage: scripts/backend-config.sh
 set -euo pipefail
 
@@ -16,4 +18,10 @@ for env in $(jq -r 'keys[]' <<<"$config"); do
   mkdir -p "$target"
   jq -r --arg env "$env" '.[$env] | to_entries[] | "\(.key) = \(.value | tojson)"' <<<"$config" >"$target/backend.hcl"
   echo "wrote $target/backend.hcl"
+
+  if [[ $env != bootstrap ]]; then
+    terraform -chdir="$repo_root/infra" init -input=false -reconfigure \
+      -backend-config="../envs/$env/backend.hcl" >/dev/null
+    echo "initialised state for $env"
+  fi
 done
