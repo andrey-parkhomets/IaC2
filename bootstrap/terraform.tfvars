@@ -15,3 +15,12 @@ environments = {
 admin_principal_ids = [
   "af21bc71-df86-45fa-8358-05bbea39ad48", # andrey.parkhomets
 ]
+
+# Job names as GitHub reports them (infra.yml, guardrails.yml)
+required_status_checks = [
+  "validate",
+  "dev / plan",
+  "prod / plan",
+  "plan identity is read-only (dev)",
+  "plan identity is read-only (prod)",
+]

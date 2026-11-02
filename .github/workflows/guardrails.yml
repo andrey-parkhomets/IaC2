@@ -1,0 +1,54 @@
+# Proves on every PR that the identity a PR can obtain (plan-<env>) is read-only:
+# writing to the environment's resource group and to its state must be denied.
+name: guardrails
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  plan-identity-read-only:
+    name: plan identity is read-only (${{ matrix.environment }})
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, prod]
+    runs-on: ubuntu-24.04
+    environment: plan-${{ matrix.environment }}
+    steps:
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Resource group write is denied
+        env:
+          RG: rg-saasapi-${{ matrix.environment }}
+        run: |
+          if az group update -n "$RG" --set tags.guardrail_probe="$GITHUB_RUN_ID" -o none 2>err.txt; then
+            echo "::error::plan identity could write to $RG"; exit 1
+          fi
+          grep -q AuthorizationFailed err.txt || { cat err.txt; exit 1; }
+          echo "denied as expected: $(grep -o 'does not have authorization[^.]*' err.txt | head -1)"
+
+      - name: State write is denied
+        env:
+          ENV_DIR: envs/${{ matrix.environment }}
+        run: |
+          account=$(sed -n 's/^storage_account_name = "\(.*\)"/\1/p' "$ENV_DIR/backend.hcl")
+          container=$(sed -n 's/^container_name = "\(.*\)"/\1/p' "$ENV_DIR/backend.hcl")
+          echo probe >probe.txt
+          if az storage blob upload --auth-mode login --account-name "$account" -c "$container" \
+               -n "guardrail-probe-$GITHUB_RUN_ID.txt" -f probe.txt -o none 2>err.txt; then
+            echo "::error::plan identity could write state in $account/$container"; exit 1
+          fi
+          grep -q AuthorizationPermissionMismatch err.txt || { cat err.txt; exit 1; }
+          echo "denied as expected: AuthorizationPermissionMismatch on $account/$container"

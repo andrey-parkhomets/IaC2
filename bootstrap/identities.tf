@@ -34,19 +34,15 @@ resource "azuread_application_federated_identity_credential" "ci" {
   subject        = "${var.github_oidc_subject_prefix}:environment:${each.value.github_environment}"
 }
 
-# Reader can't plan Container Apps / Log Analytics: the provider reads their secrets and keys.
-# State already contains those values, so this grants nothing the plan identity can't read anyway.
+# Read-only role for PR plans. Kept as a custom role (instead of built-in Reader) so extra
+# read actions can be added if the provider ever needs them: add only what a failing plan proves.
 resource "azurerm_role_definition" "plan" {
   name        = "Terraform Plan (${var.project})"
   scope       = "/subscriptions/${var.subscription_id}"
   description = "Read-only access needed for terraform plan of the ${var.project} stack"
 
   permissions {
-    actions = [
-      "*/read",
-      "Microsoft.App/containerApps/listSecrets/action",
-      "Microsoft.OperationalInsights/workspaces/sharedKeys/action",
-    ]
+    actions = ["*/read"]
   }
 
   assignable_scopes = [for rg in azurerm_resource_group.env : rg.id]
