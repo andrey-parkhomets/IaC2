@@ -143,6 +143,18 @@ terraform init && terraform apply
 terraform init -migrate-state -backend-config=backend.hcl
 ```
 
+### Verify the CI identities
+
+```sh
+# rights of the read-only plan role (-o json: table output can't show nested lists)
+az role definition list --name "Terraform Plan (saasapi)" --query '[0].permissions' -o json
+# what one identity can do, and that it has no secrets
+APP=$(az ad app list --display-name gh-IaC2-prod-plan --query '[0].appId' -o tsv)
+az role assignment list --assignee "$APP" --all -o table
+az ad app credential list --id "$APP" -o json                       # []
+az ad app federated-credential list --id "$APP" --query '[].subject' -o tsv
+```
+
 ## Not in scope (yet)
 
 Networking (VNet integration, private endpoints), custom domains and TLS, alerts and dashboards,

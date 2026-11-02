@@ -47,10 +47,10 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
-      - name: Init
-        run: terraform init -backend-config="$ENV_DIR/backend.hcl"
-
       # -lock=false: the plan identity can only read state; applies hold the lock
+      - name: Init
+        run: terraform init -lock=false -backend-config="$ENV_DIR/backend.hcl"
+
       - name: Plan
         id: plan
         run: |

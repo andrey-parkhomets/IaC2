@@ -35,6 +35,7 @@ TODO: pick the 4–5 that changed direction, e.g.
 |---|---|
 | Posted an `atlantis apply` PR comment on my behalf; I rejected the tool call, but the comment had already been sent, and the assistant didn't say so until I noticed the apply on the PR | Reading the PR. Fix: assistants get no `gh pr comment`/merge rights without confirmation (`.claude/settings.json`) |
 | Invented a version for the tflint azurerm ruleset (0.30.0) | Caught by its own rule "check versions against releases"; corrected to a real release |
+| A verification command returned nothing; the assistant gave three confident explanations in a row (wrong scope, replication delay, flaky lookup) | My own experiments: it worked with `-o json`, not with `-o table`. Real cause: my Azure CLI default output is `table`, which can't render nested lists. Lesson: compare the exact commands before theorising |
 | Assumed BSD `sed` on macOS; the in-place edit failed (GNU sed installed) | Command error; switched to a file edit |
 | Built a Docker image referencing a script it created but never committed; CI failed `not found` | CI log (`transferring context: 2B`) → `git status` showed it untracked |
 | First Atlantis design used the Actions cache; plans never reached apply (caches are ref-scoped, comment runs can't write them) | `atlantis apply` → "no working directory found"; diagnosed from cache step logs |
