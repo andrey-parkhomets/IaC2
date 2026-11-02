@@ -30,6 +30,7 @@ Each task is a PR (or a few) through the normal pipeline. Estimates in engineer-
 | 11 | Health probes, revision-based blue/green with traffic split for prod | B | 1.5 | Failed revision gets no traffic; rollback is one command |
 | 12 | Monitoring: Application Insights, availability test, alerts on 5xx, latency, restarts; action group | B | 2 | Alert fires in a drill |
 | 13 | Custom domain + managed certificate for prod; optional Front Door/WAF decision | A | 1.5 | API served on client domain over TLS |
+| 13b | *Optional, on trigger (README decision 7):* API Management in front of the services, starting from the Apim-Samples Front Door/Private Link pattern | A | 3–5 | Consumers go through APIM; services have internal ingress only |
 | 14 | Secrets runbook: how to add/rotate a secret in Key Vault, app reference via `key_vault_secrets` | A | 0.5 | Runbook tested on dev |
 
 ## Phase 4 – Hardening and handover (weeks 5–6)

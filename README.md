@@ -107,7 +107,18 @@ PR plans run with `-lock=false` because the plan identity can only read state.
 Infra creates the Container App with a placeholder image and ignores later image changes. The
 application's own pipeline builds, pushes to ACR and rolls out new revisions (see work plan).
 
-### 7. Supply chain and hygiene
+### 7. No API Management (yet)
+APIM solves needs this client hasn't stated: many APIs or external consumers behind one front
+door, per-consumer keys and quotas, versioning, a developer portal, AI token governance. For one
+API, Container Apps ingress already gives TLS, custom domains, built-in auth, IP restrictions and
+revision-based rollouts. A production-grade gateway (Standard v2, needed for the Front Door →
+Private Link → APIM pattern) costs ~$700/month in Poland Central, several times the rest of this
+platform, and adds a second configuration surface for a two-person team. Adding it later is
+non-breaking: a new platform component, services switch to internal ingress, the domain moves to
+the gateway. Trigger to revisit: any of the needs above appears. Reference architectures:
+[Azure-Samples/Apim-Samples](https://github.com/Azure-Samples/Apim-Samples).
+
+### 8. Supply chain and hygiene
 Actions pinned to commit SHAs (Dependabot keeps them current), provider lock files committed,
 pre-commit with fmt/validate/tflint/gitleaks, CODEOWNERS on CI, bootstrap and prod.
 
