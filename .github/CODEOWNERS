@@ -1,0 +1,9 @@
+# Default owner. When the team grows, replace with teams, e.g. @org/platform-leads
+*                    @andrey-parkhomets
+
+# Changes to CI, trust (identities, environments) and prod sizing need the tech lead
+/.github/            @andrey-parkhomets
+/bootstrap/          @andrey-parkhomets
+/envs/prod/          @andrey-parkhomets
+/CLAUDE.md           @andrey-parkhomets
+/.claude/            @andrey-parkhomets

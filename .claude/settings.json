@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(terraform fmt:*)",
+      "Bash(terraform validate:*)",
+      "Bash(terraform init -backend=false:*)",
+      "Bash(terraform providers:*)",
+      "Bash(tflint:*)",
+      "Bash(pre-commit run:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)"
+    ],
+    "ask": [
+      "Bash(terraform plan:*)",
+      "Bash(terraform init:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr comment:*)",
+      "Bash(az:*)"
+    ],
+    "deny": [
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)",
+      "Bash(terraform import:*)",
+      "Bash(terraform state:*)",
+      "Bash(terraform force-unlock:*)",
+      "Bash(terraform -chdir=* apply:*)",
+      "Bash(terraform -chdir=* destroy:*)",
+      "Bash(terraform -chdir=* state:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh secret:*)",
+      "Bash(gh variable:*)",
+      "Bash(gh api -X:*)",
+      "Bash(gh api --method:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Read(**/*.tfstate)",
+      "Read(**/*.tfstate.*)",
+      "Read(**/tfplan)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.secret.tfvars)"
+    ]
+  }
+}

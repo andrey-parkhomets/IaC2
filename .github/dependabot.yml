@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Actions are pinned to commit SHAs; Dependabot bumps SHA + version comment together
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: terraform
+    directories:
+      - /infra
+      - /bootstrap
+      - /modules/*
+    schedule:
+      interval: weekly

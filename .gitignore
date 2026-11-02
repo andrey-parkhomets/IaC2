@@ -1,0 +1,28 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+tfplan
+plan.txt
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Secrets never live in the repo. Committed tfvars hold sizing only.
+*.secret.tfvars
+.env
+.env.*
+
+# Local AI assistant overrides (shared rules are in CLAUDE.md / .claude/settings.json)
+.claude/settings.local.json
+CLAUDE.local.md
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
