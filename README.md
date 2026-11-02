@@ -62,6 +62,10 @@ flowchart LR
   `prod` GitHub environment until a required reviewer approves. The reviewer sees the prod plan
   in the run, and the apply job applies **exactly that plan file**; if anything changed state in
   between, Terraform rejects it as stale.
+- **Which plan to trust.** A PR's plan comment is produced by workflow code the PR author controls,
+  so it's a review aid, not evidence (the read-only identity limits what such a run can do). The
+  authoritative plan is the one from `main`, built from reviewed code (CODEOWNERS on
+  `.github/`), shown in the run and applied as-is after approval.
 - Applies per environment are serialized (`concurrency: apply-<env>`); state is locked during apply.
 
 ## Key decisions
@@ -80,7 +84,7 @@ can at most get a read-only identity: it can't enter `prod`, whose branch policy
 the admin running bootstrap.
 
 ### 2. Plain GitHub Actions instead of Atlantis
-Atlantis was prototyped (it worked, see the earlier repo), but on GitHub-hosted runners it needs
+Atlantis was prototyped (it worked, see [andrey-parkhomets/IaC](https://github.com/andrey-parkhomets/IaC), PRs #1–#2 and `docs/atlantis.md`), but on GitHub-hosted runners it needs
 extra plumbing (an event relay, persisting its data directory between jobs) and its approval rule
 can be bypassed by editing the workflow on a branch. GitHub environments give the approval gate,
 audit trail and branch restriction natively, with less for the team to maintain. Atlantis becomes

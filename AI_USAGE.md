@@ -1,14 +1,12 @@
 # AI usage
 
-> DRAFT prepared with the assistant from the actual session; to be reviewed and completed by me
-> (sections marked TODO).
+Written with the assistant from the session transcript, then reviewed and edited by me.
 
 ## Tools
 
 | Tool | Used for |
 |---|---|
 | Claude Code (Claude Opus 5.5, terminal agent, auto mode) | Refactoring my initial Terraform module, designing the state/OIDC layout, writing modules, workflows and docs, running `terraform`/`gh`/`az` against my sandbox subscription, debugging CI runs from logs |
-| TODO | other tools, if any (IDE completion, chat) |
 
 Everything ran against a personal sandbox subscription and personal GitHub repos; no client data
 or secrets were shared with the assistant. IDs that appear (subscription, tenant, object IDs) are
@@ -16,7 +14,7 @@ identifiers, not credentials.
 
 ## Prompts that mattered
 
-TODO: pick the 4–5 that changed direction, e.g.
+The ones that changed direction:
 
 - "check my module, remove unnecessary variables, what would you refactor?" – found real bugs, not
   just cleanup (template variable mismatch, azurerm 3.x pin with a 4.x-only argument, "bring your
@@ -27,7 +25,13 @@ TODO: pick the 4–5 that changed direction, e.g.
   workarounds isolated; later this framing made it clear Atlantis wasn't worth it for this brief.
 - "for Atlantis we can set up external Redis …" – the assistant argued against it (Redis password =
   long-lived credential, public endpoint), which fed decision 2 in the README.
-- "read the PDF, what do you think" → "create IaC2 without Atlantis following the PDF".
+- "read the PDF, what do you think" → "create IaC2 without Atlantis following the PDF" – the
+  Atlantis prototype stays in [andrey-parkhomets/IaC](https://github.com/andrey-parkhomets/IaC)
+  with its real history; this repo starts from what it taught.
+- "justify not to add APIM?" – forced a priced, written decision (README decision 7) instead of
+  adding a component the brief doesn't need.
+- "where can I see proof that plan-prod is read-only?" – turned a claim into evidence: the
+  `guardrails` workflow, and cutting the plan role to what a failing plan proved (PR #7).
 
 ## Where the AI got it wrong, and how I noticed
 
