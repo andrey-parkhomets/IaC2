@@ -39,6 +39,8 @@ TODO: pick the 4–5 that changed direction, e.g.
 | Assumed BSD `sed` on macOS; the in-place edit failed (GNU sed installed) | Command error; switched to a file edit |
 | Built a Docker image referencing a script it created but never committed; CI failed `not found` | CI log (`transferring context: 2B`) → `git status` showed it untracked |
 | First Atlantis design used the Actions cache; plans never reached apply (caches are ref-scoped, comment runs can't write them) | `atlantis apply` → "no working directory found"; diagnosed from cache step logs |
+| Gave the read-only plan role two extra actions (`listSecrets`, `sharedKeys`) "because the provider needs them", without evidence | Rule "add only what a failing plan proves": cut the role to `*/read` and planned against deployed dev (PR #7). The plan failed on exactly one action, Container App `listSecrets`, so only that came back; `sharedKeys` was never needed |
+| Its guardrail check expected `AuthorizationPermissionMismatch` on a denied state write, but the Azure CLI rewrites that 403 as "You do not have the required permissions", so the check failed although the write *was* denied | Read the job log before touching permissions; fixed the check, not the role |
 | Proposed `ARM_USE_OIDC` flow and federated credentials before checking the repo's OIDC subject format (GitHub's immutable `owner@id/repo@id` format) | Verified against GitHub's API and the subject printed by `azure/login` in the first run |
 
 Guardrails that worked: Claude Code's auto mode **blocked** the assistant from weakening a GitHub
