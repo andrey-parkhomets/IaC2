@@ -20,7 +20,7 @@ Each task is a PR (or a few) through the normal pipeline. Estimates in engineer-
 | 6 | VNet per environment; Container Apps environment with VNet integration | A | 2 | Apps run in the VNet; plan is replace-free for prod or migration documented |
 | 7 | Private endpoints + private DNS for ACR (Premium in prod) and Key Vault; disable public access | A | 2 | Vault/registry unreachable from internet; apps still pull and read secrets |
 | 8 | State account: private endpoint or IP allow-list for GitHub runners (or self-hosted runners in the VNet) | A | 1.5 | State not publicly reachable; CI still works |
-| 9 | Restrict the apply identity's RBAC Administrator role with a condition (only AcrPull / Key Vault Secrets User) | A | 0.5 | Apply identity can't grant Owner/Contributor |
+| 9 | ~~Restrict the apply identity's RBAC Administrator role with a condition~~ **done** (`bootstrap/identities.tf`); remaining: a main-only check that a forbidden role grant is denied | A | 0.25 | Apply identity provably can't grant Owner/Contributor |
 
 ## Phase 3 – Application delivery and operations (weeks 2–4, parallel)
 

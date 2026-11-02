@@ -53,13 +53,41 @@ resource "azurerm_role_definition" "plan" {
 }
 
 locals {
+  # The apply identity may only grant the roles the container-service module assigns to app
+  # identities, so it can't escalate itself (or anyone) to Owner/Contributor.
+  delegable_role_ids = [
+    "7f951dda-4ed3-4680-a7ca-43fe172d538d", # AcrPull
+    "4633458b-17de-408a-b874-0445c86b69e6", # Key Vault Secrets User
+  ]
+  rbac_condition = <<-EOT
+    (
+     (
+      !(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})
+     )
+     OR
+     (
+      @Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${join(", ", local.delegable_role_ids)}}
+     )
+    )
+    AND
+    (
+     (
+      !(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})
+     )
+     OR
+     (
+      @Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${join(", ", local.delegable_role_ids)}}
+     )
+    )
+  EOT
+
   # role = built-in role name; the plan identity's RG role is the custom one above
   role_assignments = merge(
-    { for env in keys(var.environments) : "${env}-plan-rg" => { identity = "${env}-plan", scope = azurerm_resource_group.env[env].id, role = null } },
-    { for env in keys(var.environments) : "${env}-plan-state" => { identity = "${env}-plan", scope = module.state.container_ids[env], role = "Storage Blob Data Reader" } },
-    { for env in keys(var.environments) : "${env}-apply-rg" => { identity = "${env}-apply", scope = azurerm_resource_group.env[env].id, role = "Contributor" } },
-    { for env in keys(var.environments) : "${env}-apply-rbac" => { identity = "${env}-apply", scope = azurerm_resource_group.env[env].id, role = "Role Based Access Control Administrator" } },
-    { for env in keys(var.environments) : "${env}-apply-state" => { identity = "${env}-apply", scope = module.state.container_ids[env], role = "Storage Blob Data Contributor" } },
+    { for env in keys(var.environments) : "${env}-plan-rg" => { identity = "${env}-plan", scope = azurerm_resource_group.env[env].id, role = null, condition = null } },
+    { for env in keys(var.environments) : "${env}-plan-state" => { identity = "${env}-plan", scope = module.state.container_ids[env], role = "Storage Blob Data Reader", condition = null } },
+    { for env in keys(var.environments) : "${env}-apply-rg" => { identity = "${env}-apply", scope = azurerm_resource_group.env[env].id, role = "Contributor", condition = null } },
+    { for env in keys(var.environments) : "${env}-apply-rbac" => { identity = "${env}-apply", scope = azurerm_resource_group.env[env].id, role = "Role Based Access Control Administrator", condition = local.rbac_condition } },
+    { for env in keys(var.environments) : "${env}-apply-state" => { identity = "${env}-apply", scope = module.state.container_ids[env], role = "Storage Blob Data Contributor", condition = null } },
   )
 }
 
@@ -69,6 +97,8 @@ resource "azurerm_role_assignment" "ci" {
   role_definition_name = each.value.role
   role_definition_id   = each.value.role == null ? azurerm_role_definition.plan.role_definition_resource_id : null
   principal_id         = azuread_service_principal.ci[each.value.identity].object_id
+  condition            = each.value.condition
+  condition_version    = each.value.condition == null ? null : "2.0"
 }
 
 output "ci_identities" {
