@@ -1,0 +1,56 @@
+# Pull request: validate + plan every environment, plans posted on the PR.
+# Merge to main: plan+apply dev, then plan prod and wait for approval before applying it.
+# Adding an environment: one more job calling terraform-env.yml (and bootstrap entry).
+name: infra
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+# PRs: newer pushes cancel older runs. main: runs queue; GitHub keeps only the newest
+# pending run, which is fine because it contains every earlier commit.
+concurrency:
+  group: infra-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: 1.15.1
+          terraform_wrapper: false
+      - name: fmt
+        run: terraform fmt -check -recursive -diff
+      - name: validate
+        run: |
+          for dir in infra bootstrap; do
+            terraform -chdir=$dir init -backend=false -input=false >/dev/null
+            terraform -chdir=$dir validate
+          done
+
+  dev:
+    needs: validate
+    uses: ./.github/workflows/terraform-env.yml
+    with:
+      environment: dev
+      apply: ${{ github.event_name != 'pull_request' }}
+
+  prod:
+    needs: dev
+    uses: ./.github/workflows/terraform-env.yml
+    with:
+      environment: prod
+      apply: ${{ github.event_name != 'pull_request' }}
