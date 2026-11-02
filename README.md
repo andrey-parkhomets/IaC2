@@ -131,8 +131,43 @@ pre-commit with fmt/validate/tflint/gitleaks, CODEOWNERS on CI, bootstrap and pr
 | To add | Do |
 |---|---|
 | a service | an entry in `services` in `envs/<env>/terraform.tfvars` |
-| an environment | an entry in `bootstrap/terraform.tfvars` → bootstrap apply → `scripts/backend-config.sh` → `envs/<env>/terraform.tfvars` → one job in `infra.yml` |
-| a subscription per environment | set `subscription_id` per environment (the variable is already per GitHub environment) and run bootstrap for it |
+| an environment | see [Adding an environment](#adding-an-environment) |
+| a subscription per environment | not supported yet: CI and `backend.hcl` already carry a subscription per environment, but bootstrap has one `subscription_id` and one provider. Needs a subscription per `environments` entry plus a bootstrap root (or provider alias) per subscription, and a decision where that subscription's state lives |
+
+### Adding an environment
+
+Example: `staging` between dev and prod.
+
+1. **Bootstrap (admin).** Add it to `environments` in `bootstrap/terraform.tfvars`
+   (`staging = {}`, or `{ reviewers = [...] }` to require approval), then:
+   ```sh
+   cd bootstrap && GITHUB_TOKEN=$(gh auth token) terraform apply
+   ../scripts/backend-config.sh    # writes envs/staging/backend.hcl, creates its empty state
+   ```
+   This creates `rg-saasapi-staging`, the `staging` state container, `gh-IaC2-staging-plan`/`-apply`
+   with their role assignments, and the GitHub environments `plan-staging` and `staging`.
+   **Don't add the required checks yet**: open PRs would wait for checks that no workflow runs.
+2. **PR.** `envs/staging/backend.hcl` (generated), `envs/staging/terraform.tfvars` (copy dev or
+   prod), a `staging` job in `infra.yml` (`needs: dev`, and prod `needs: staging`), and `staging`
+   in the matrix of `guardrails.yml`. Review the plan, merge.
+3. **Bootstrap again.** Add `"staging / plan"` and `"plan identity is read-only (staging)"` to
+   `required_status_checks` and apply.
+
+## Pausing to save cost
+
+Bootstrap resources (state storage, resource groups, identities, GitHub settings) cost cents per
+month; the environment stacks are the cost. An admin can destroy a stack locally:
+
+```sh
+cd infra
+terraform init -reconfigure -backend-config=../envs/<env>/backend.hcl
+terraform plan -destroy -var-file=../envs/<env>/terraform.tfvars -out=destroy.tfplan
+terraform apply destroy.tfplan
+```
+
+The next merge to `main` recreates dev automatically and plans prod, which waits for approval
+(reject it to keep prod down). A destroyed prod Key Vault stays soft-deleted (purge protection,
+90 days) at no cost; the recreated vault gets a new random suffix, so names don't collide.
 
 ## Bootstrap (admin, once)
 
