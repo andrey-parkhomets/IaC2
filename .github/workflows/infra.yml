@@ -1,6 +1,7 @@
 # Pull request: validate + plan every environment, plans posted on the PR.
 # Merge to main: plan+apply dev, then plan prod and wait for approval before applying it.
 # Adding an environment: one more job calling terraform-env.yml (and bootstrap entry).
+# Changes that can't affect infrastructure (docs, bootstrap, other workflows) skip plan/apply.
 name: infra
 
 on:
@@ -22,6 +23,32 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      terraform: ${{ steps.diff.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # manual runs, new branches or an unknown base: run everything
+          if [[ $GITHUB_EVENT_NAME == workflow_dispatch || -z $BASE || $BASE =~ ^0+$ ]] || ! git cat-file -e "$BASE^{commit}"; then
+            echo "terraform=true" >>"$GITHUB_OUTPUT"; exit 0
+          fi
+          changed=$(git diff --name-only "$BASE...$GITHUB_SHA")
+          echo "$changed"
+          if grep -qE '^(infra|modules|envs)/|^\.github/workflows/(infra|terraform-env)\.yml$' <<<"$changed"; then
+            echo "terraform=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "terraform=false" >>"$GITHUB_OUTPUT"
+          fi
+
   validate:
     runs-on: ubuntu-24.04
     permissions:
@@ -42,15 +69,19 @@ jobs:
           done
 
   dev:
-    needs: validate
+    needs: [changes, validate]
     uses: ./.github/workflows/terraform-env.yml
     with:
       environment: dev
       apply: ${{ github.event_name != 'pull_request' }}
+      run: ${{ needs.changes.outputs.terraform == 'true' }}
 
   prod:
-    needs: dev
+    needs: [changes, dev]
+    # also when dev's jobs were skipped, so "prod / plan" always reports for required checks
+    if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/terraform-env.yml
     with:
       environment: prod
       apply: ${{ github.event_name != 'pull_request' }}
+      run: ${{ needs.changes.outputs.terraform == 'true' }}

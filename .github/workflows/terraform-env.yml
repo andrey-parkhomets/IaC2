@@ -13,6 +13,10 @@ on:
       apply:
         type: boolean
         default: false
+      run:
+        description: false skips the jobs (they still report, as skipped, for required checks)
+        type: boolean
+        default: true
 
 env:
   TF_IN_AUTOMATION: "true"
@@ -24,6 +28,7 @@ env:
 jobs:
   plan:
     name: plan
+    if: inputs.run
     runs-on: ubuntu-24.04
     environment: plan-${{ inputs.environment }}
     permissions:
